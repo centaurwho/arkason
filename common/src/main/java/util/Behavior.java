@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Utility data structure that acts a map with class types as values and functions as values.
+ * Utility data structure that acts a map with class types as keys and functions as values.
  * All keys must inherit from the same interface or class. Functions must accept arguments of
  * corresponding key's type.
  * <p>
