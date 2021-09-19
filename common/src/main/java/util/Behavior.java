@@ -74,7 +74,6 @@ public class Behavior<T, U> {
      * @param t any value of type {@link T}
      * @param u any value of type {@link U}
      */
-    @SuppressWarnings("unchecked")
     public void apply(T t, U u) {
         BiConsumer<T, U> funcToUse = fallback;
         // TODO: Look if there is a way to get rid of this loop. There could be a specialized map for this usecase
