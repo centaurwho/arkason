@@ -6,19 +6,21 @@ import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
 public class BehaviorTest {
 
+    private int testVariable;
+
     @Test
     public void testBasicBehavior() {
         Behavior<TestInterface, Integer> behavior = new Behavior<TestInterface, Integer>()
                 .entry(ClassOne.class, this::functionOne)
                 .entry(ClassTwo.class, this::functionTwo)
-                .def(c -> 3);
+                .def((t, i) -> testVariable = 3);
 
-        int result = behavior.apply(new ClassOne());
-        assertEquals(1, result);
+        behavior.apply(new ClassOne(), 123);
+        assertEquals(1, testVariable);
 
         // Falls to default
-        result = behavior.apply(new ClassThree());
-        assertEquals(3, result);
+        behavior.apply(new ClassThree(), 123);
+        assertEquals(3, testVariable);
     }
 
     @Test
@@ -40,21 +42,21 @@ public class BehaviorTest {
 
         behavior1.overlay(behavior2);
 
-        int result = behavior1.apply(new ClassOne());
-        assertEquals(111, result);
+        behavior1.apply(new ClassOne(), 123);
+        assertEquals(111, testVariable);
     }
 
 
-    private int functionOne(ClassOne value) {
-        return 1;
+    private void functionOne(ClassOne value, Integer val) {
+        this.testVariable = 1;
     }
 
-    private int functionOneUpdated(ClassOne value) {
-        return 111;
+    private void functionOneUpdated(ClassOne value, Integer val) {
+        this.testVariable = 111;
     }
 
-    private int functionTwo(ClassTwo value) {
-        return 2;
+    private void functionTwo(ClassTwo value, Integer val) {
+        this.testVariable = 2;
     }
 
     interface TestInterface {}
