@@ -76,7 +76,13 @@ public class Behavior<T, U> {
      */
     @SuppressWarnings("unchecked")
     public void apply(T t, U u) {
-        Class<T> clazz = (Class<T>) t.getClass();
-        this.behaviorMap.getOrDefault(clazz, fallback).accept(t, u);
+        BiConsumer<T, U> funcToUse = fallback;
+        // TODO: Look if there is a way to get rid of this loop. There could be a specialized map for this usecase
+        for (Class<T> clazz: behaviorMap.keySet()) {
+            if (clazz.isInstance(t)) {
+                funcToUse = behaviorMap.get(clazz);
+            }
+        }
+        funcToUse.accept(t, u);
     }
 }
