@@ -1,6 +1,7 @@
-package http;
+package http.netty;
 
-import http.netty.HttpArkasonInitializer;
+import http.RequestDispatcher;
+import http.netty.handler.HttpArkasonInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
@@ -17,10 +18,12 @@ public class Server {
 
     private final String host;
     private final int port;
+    private final RequestDispatcher dispatcher;
 
-    public Server(String host, int port) {
+    public Server(String host, int port, RequestDispatcher dispatcher) {
         this.port = port;
         this.host = host;
+        this.dispatcher = dispatcher;
     }
 
     public void run() {
@@ -49,7 +52,7 @@ public class Server {
                 .group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
                 .handler(new LoggingHandler(LogLevel.INFO))
-                .childHandler(new HttpArkasonInitializer());
+                .childHandler(new HttpArkasonInitializer(dispatcher));
     }
 
 }

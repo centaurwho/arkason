@@ -1,5 +1,7 @@
-package http.netty;
+package http.netty.handler;
 
+import http.RequestDispatcher;
+import http.RequestParams;
 import http.netty.util.RequestUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -11,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.Behavior;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.*;
@@ -21,8 +24,10 @@ public class HttpArkasonServerHandler extends SimpleChannelInboundHandler<HttpMe
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpArkasonServerHandler.class);
     private final Behavior<HttpObject, ChannelHandlerContext> behavior;
+    private final RequestDispatcher dispatcher;
 
-    public HttpArkasonServerHandler() {
+    public HttpArkasonServerHandler(RequestDispatcher dispatcher) {
+        this.dispatcher = dispatcher;
         behavior = new Behavior<HttpObject, ChannelHandlerContext>()
                 .entry(HttpContent.class, this::onHttpContent)
                 .entry(HttpRequest.class, this::onHttpRequest);
@@ -37,12 +42,11 @@ public class HttpArkasonServerHandler extends SimpleChannelInboundHandler<HttpMe
         if (HttpUtil.is100ContinueExpected(req)) {
             ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
         }
-        boolean keepAlive = HttpUtil.isKeepAlive(req);
+        RequestParams params = extractParams(req);
 
-        FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK,
-                Unpooled.wrappedBuffer("hello world".getBytes(StandardCharsets.UTF_8)));
-        response.headers().set(CONTENT_TYPE, "text/plain");
-        response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
+        boolean keepAlive = HttpUtil.isKeepAlive(req);
+        HttpResponse response = dispatcher.dispatchAndApply(params, req);
+
         if (!keepAlive) {
             ctx.write(response).addListener(ChannelFutureListener.CLOSE);
         } else {
@@ -50,6 +54,11 @@ public class HttpArkasonServerHandler extends SimpleChannelInboundHandler<HttpMe
             response.headers().set(CONNECTION, "keep-alive");
             ctx.write(response);
         }
+    }
+
+    private RequestParams extractParams(HttpRequest req) {
+        String uriString = "http://" + req.headers().get("Host");
+        return new RequestParams(req.method(), URI.create(uriString));
     }
 
     private void onHttpContent(HttpContent content, ChannelHandlerContext ctx) {
